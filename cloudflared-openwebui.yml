@@ -1,0 +1,8 @@
+tunnel: e7ae3196-5755-4b65-91f3-c9aecafd8fc7
+credentials-file: /home/oni/.cloudflared/e7ae3196-5755-4b65-91f3-c9aecafd8fc7.json
+origincert: /home/oni/.cloudflared/cert.pem
+
+ingress:
+  - hostname: openwebui.workflowin.cloud
+    service: http://localhost:3000
+  - service: http_status:404

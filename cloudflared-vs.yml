@@ -1,0 +1,8 @@
+tunnel: 493b9c47-79f2-4c35-a268-1833db8da48d
+credentials-file: /home/oni/.cloudflared/493b9c47-79f2-4c35-a268-1833db8da48d.json
+origincert: /home/oni/.cloudflared/cert.pem
+
+ingress:
+  - hostname: vs.workflowin.cloud
+    service: http://localhost:8080
+  - service: http_status:404

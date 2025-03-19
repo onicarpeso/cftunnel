@@ -1,0 +1,8 @@
+tunnel: e7b864eb-1de8-47aa-9cd9-8dfe3c91cf19
+credentials-file: /home/oni/.cloudflared/e7b864eb-1de8-47aa-9cd9-8dfe3c91cf19.json
+origincert: /home/oni/.cloudflared/cert.pem
+
+ingress:
+  - hostname: flowise.workflowin.cloud
+    service: http://localhost:3001
+  - service: http_status:404

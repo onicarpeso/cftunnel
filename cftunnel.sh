@@ -20,14 +20,23 @@ PORT=$3
 TUNNEL_NAME="${APPNAME}-tunnel"
 CONFIG_FILE="cloudflared-${APPNAME}.yml"
 
-# Create new Cloudflare Tunnel
-echo "Creating tunnel: ${TUNNEL_NAME}..."
-CREATE_OUTPUT=$(cloudflared tunnel create ${TUNNEL_NAME})
-TUNNEL_ID=$(echo "${CREATE_OUTPUT}" | sed -n 's/.*Created tunnel .* with id \([^ ]*\).*/\1/p')
+# Check if tunnel already exists
+echo "Checking if tunnel ${TUNNEL_NAME} already exists..."
+TUNNEL_ID=$(cloudflared tunnel list | grep "${TUNNEL_NAME}" | awk '{print $1}')
 
 if [ -z "${TUNNEL_ID}" ]; then
-    echo "❌ Failed to create tunnel"
-    exit 1
+    # Create new Cloudflare Tunnel if it doesn't exist
+    echo "Creating tunnel: ${TUNNEL_NAME}..."
+    CREATE_OUTPUT=$(cloudflared tunnel create ${TUNNEL_NAME})
+    TUNNEL_ID=$(echo "${CREATE_OUTPUT}" | sed -n 's/.*Created tunnel .* with id \([^ ]*\).*/\1/p')
+
+    if [ -z "${TUNNEL_ID}" ]; then
+        echo "❌ Failed to create tunnel"
+        exit 1
+    fi
+    echo "✅ Tunnel created with ID: ${TUNNEL_ID}"
+else
+    echo "✅ Tunnel ${TUNNEL_NAME} already exists with ID: ${TUNNEL_ID}"
 fi
 
 # Create configuration file with certificate path
@@ -43,15 +52,32 @@ ingress:
   - service: http_status:404
 EOF
 
-# Create DNS record
-echo "Creating DNS route: ${APPNAME}.${DOMAIN}..."
-cloudflared tunnel route dns ${TUNNEL_NAME} ${APPNAME}.${DOMAIN}
+# Check if DNS record already exists
+echo "Checking if DNS record for ${APPNAME}.${DOMAIN} already exists..."
+DNS_CHECK=$(cloudflared tunnel route dns ${TUNNEL_NAME} ${APPNAME}.${DOMAIN} 2>&1)
+if [[ $DNS_CHECK == *"already exists"* ]]; then
+    echo "✅ DNS record for ${APPNAME}.${DOMAIN} already exists"
+else
+    # Create DNS record
+    echo "Creating DNS route: ${APPNAME}.${DOMAIN}..."
+    cloudflared tunnel route dns ${TUNNEL_NAME} ${APPNAME}.${DOMAIN}
+    echo "✅ DNS record created"
+fi
 
 # Start the tunnel in background with logging
 echo "🚀 Starting tunnel ${TUNNEL_NAME} in background..."
 echo "🔗 Your service is available at: https://${APPNAME}.${DOMAIN}"
 echo "📝 Logs: ${APPNAME}-cloudflared.log"
 echo "💾 PID: ${APPNAME}-cloudflared.pid"
+
+# Check if tunnel is already running
+if [ -f "${APPNAME}-cloudflared.pid" ] && ps -p $(cat ${APPNAME}-cloudflared.pid) > /dev/null; then
+    echo "⚠️ Tunnel is already running with PID: $(cat ${APPNAME}-cloudflared.pid)"
+    echo "Stopping existing tunnel..."
+    kill $(cat ${APPNAME}-cloudflared.pid)
+    rm ${APPNAME}-cloudflared.pid
+    sleep 2
+fi
 
 # Run tunnel in background with logging
 cloudflared tunnel --config ${CONFIG_FILE} run ${TUNNEL_NAME} > ${APPNAME}-cloudflared.log 2>&1 &
