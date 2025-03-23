@@ -1,8 +1,0 @@
-tunnel: 9f2ce4b3-ba7b-49ea-a18e-73e1f74f2f36
-credentials-file: /home/oni/.cloudflared/9f2ce4b3-ba7b-49ea-a18e-73e1f74f2f36.json
-origincert: /home/oni/.cloudflared/cert.pem
-
-ingress:
-  - hostname: n8n.workflowin.cloud
-    service: http://localhost:5678
-  - service: http_status:404
