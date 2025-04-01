@@ -22,7 +22,7 @@ This bash script automates the creation and management of Cloudflare tunnels for
 ## Usage
 
 ```bash
-./your_script_name.sh <appname> <domain> <local-port>
+./cftunnel.sh <appname> <domain> <local-port>
 ```
 
 * `<appname>`: The name of your application (used for the tunnel name, config file name, log file name, and subdomain). For instance, if your app is called "my-app", you would assign this to the appname.
